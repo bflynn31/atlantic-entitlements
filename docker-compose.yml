@@ -1,0 +1,24 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - sqlite-data:/app/data
+    environment:
+      - DB_PATH=/app/data/db.sqlite3
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NEXT_TELEMETRY_DISABLED=1
+    depends_on:
+      - backend
+
+volumes:
+  sqlite-data:
