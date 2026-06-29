@@ -185,8 +185,14 @@ The dashboard provides:
 
 ---
 
-## Design decisions
+## Future Work
 
-- **Entitlements are never stored.** The `GET /api/users/{id}/entitlements/` endpoint runs the union logic at query time. This means entitlements are always correct without background jobs.
-- **`revoked_at` over a boolean.** A separate `is_revoked` column would be redundant. `revoked_at IS NOT NULL` carries both the revocation state and its timestamp.
-- **Active filter is a DB query, not Python filtering.** `SubscriptionViewSet.get_queryset` builds a queryset with `revoked_at__isnull`, `start_date__lte`, and `end_date__gt` conditions so the database does the work rather than loading all rows into Python.
+If more time was given and if the system would be productionized a few things would be changed. The following would have to be addressed:
+- Security: Proper authentication and secret handling would need to be added. Rate limiting would need to be added.
+- Database: SQLite would have to be migrated to PostgresSQL. Database backups would need to be added for failure scenarios
+- Backend: proper error handling, logging, and health checks need to be added
+- Frontend: Might completely change depending on entitlements needs and how the company needs to visualize the data
+- Testing: unit tests, load testing, etc
+- Observability: structured logs, metrics, and alerts
+
+
