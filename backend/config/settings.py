@@ -18,7 +18,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
-    "drf_spectacular",
     "entitlements",
 ]
 
@@ -82,20 +81,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-}
-
-# Swagger UI — available at /api/docs/
-SPECTACULAR_SETTINGS = {
-    "TITLE": "Atlantic Entitlements API",
-    "DESCRIPTION": (
-        "Manages user subscriptions and computes live entitlements. "
-        "A subscription is active when revoked_at is null, start_date ≤ today, "
-        "and end_date is null or end_date > today. "
-        "Entitlements are the union of all active subscription grants."
-    ),
-    "VERSION": "1.0.0",
-    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 # CORS — allow the Next.js dev server

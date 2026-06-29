@@ -1,18 +1,12 @@
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import Subscription
-from .serializers import (
-    ActiveSubscriptionSerializer,
-    EntitlementsSerializer,
-    SubscriptionSerializer,
-    UserSerializer,
-)
+from .serializers import ActiveSubscriptionSerializer, SubscriptionSerializer, UserSerializer
 
 # Each product grants a set of entitlement flags.
 # A user's final entitlements are the union across all their active subscriptions.
@@ -38,11 +32,6 @@ def active_subscription_filter(qs):
     ).filter(Q(end_date__isnull=True) | Q(end_date__gt=today))
 
 
-@extend_schema_view(
-    list=extend_schema(summary="List all users"),
-    create=extend_schema(summary="Create a user"),
-    retrieve=extend_schema(summary="Get a user by ID"),
-)
 class UserViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
@@ -52,15 +41,6 @@ class UserViewSet(
     queryset = User.objects.all().order_by("id")
     serializer_class = UserSerializer
 
-    @extend_schema(
-        summary="Get live entitlements for a user",
-        description=(
-            "Computes entitlements in real time as the union of all active subscription grants. "
-            "A subscription is active when revoked_at is null, start_date ≤ today, "
-            "and end_date is null or end_date > today."
-        ),
-        responses={200: EntitlementsSerializer},
-    )
     @action(detail=True, methods=["get"])
     def entitlements(self, request, pk=None):
         user = self.get_object()
@@ -77,19 +57,6 @@ class UserViewSet(
         })
 
 
-@extend_schema_view(
-    list=extend_schema(
-        summary="List subscriptions",
-        parameters=[
-            OpenApiParameter("user", int, description="Filter by user ID"),
-            OpenApiParameter("product", str, description="Filter by product (DIGITAL, PRINT, PREMIUM)"),
-            OpenApiParameter("active", str, enum=["true"], description="Return only currently active subscriptions"),
-        ],
-    ),
-    create=extend_schema(summary="Grant a subscription to a user"),
-    retrieve=extend_schema(summary="Get a subscription by ID"),
-    destroy=extend_schema(summary="Hard-delete a subscription (admin only)"),
-)
 class SubscriptionViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
@@ -112,15 +79,6 @@ class SubscriptionViewSet(
 
         return qs
 
-    @extend_schema(
-        summary="Revoke a subscription",
-        description="Sets revoked_at to now. Returns 400 if already revoked.",
-        request=None,
-        responses={
-            200: SubscriptionSerializer,
-            400: OpenApiResponse(description="Already revoked"),
-        },
-    )
     @action(detail=True, methods=["patch"])
     def revoke(self, request, pk=None):
         sub = self.get_object()

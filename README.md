@@ -59,7 +59,6 @@ docker compose up --build
 
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8000/api
-- Swagger UI: http://localhost:8000/api/docs/
 
 The SQLite database is stored in a named Docker volume (`sqlite-data`) so data persists across restarts. To wipe it: `docker compose down -v`.
 
@@ -90,7 +89,7 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:3000** in your browser. Swagger UI is at **http://localhost:8000/api/docs/**.
+Open **http://localhost:3000** in your browser.
 
 ---
 
