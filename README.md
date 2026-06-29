@@ -5,7 +5,7 @@ A subscription entitlement system for The Atlantic. A Django + DRF backend compu
 ## What I was able to complete
 
 The core entitlement system is fully implemented. The backend is a Django + DRF API with a single Subscription model that tracks product grants per user with a full lifecycle — subscriptions can be future-dated, set to expire on a specific date, or revoked immediately. Entitlements are computed live at query time as the union of all active subscription grants rather than being stored, meaning the answer to "what is this user entitled to right now" is always correct without any background sync jobs.
-The frontend is a Next.js admin dashboard where you can create users, grant subscriptions with optional end dates, revoke subscriptions, and see a user's current entitlement status rendered as live indicators. The whole stack runs with a single docker compose up --build command.
+The frontend is a Next.js admin dashboard where you can create users, grant subscriptions with optional end dates, revoke subscriptions, and see a user's current entitlement status rendered as live indicators. The whole stack runs with a single "docker compose up --build" command.
 
 ## Assumptions and Trade Offs
 - Users can hold multiple subscriptions simultaneously. The prompt describes products as a strict hierarchy but doesn't explicitly say a user can only hold one at a time. I treated multiple concurrent grants as a feature — it supports legitimate scenarios like overlapping renewals, gifted subscriptions on top of a self-purchased one, or upgrading mid-cycle without revoking the old subscription. The union-based entitlement logic handles this correctly.
