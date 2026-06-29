@@ -1,49 +1,41 @@
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema, extend_schema_view, inline_serializer
-from rest_framework import fields as f
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import Subscription
-from .serializers import ActiveSubscriptionSerializer, SubscriptionSerializer, UserSerializer
+from .serializers import (
+    ActiveSubscriptionSerializer,
+    EntitlementsSerializer,
+    SubscriptionSerializer,
+    UserSerializer,
+)
 
-# Maps each product to the entitlement flags it grants.
-# Union semantics: a flag is True if ANY active subscription grants it.
-_PRODUCT_GRANTS: dict[str, set[str]] = {
+# Each product grants a set of entitlement flags.
+# A user's final entitlements are the union across all their active subscriptions.
+PRODUCT_GRANTS: dict[str, set[str]] = {
     Subscription.DIGITAL: {"can_read_web"},
-    Subscription.PRINT: {"can_read_web", "can_receive_print"},
+    Subscription.PRINT:   {"can_read_web", "can_receive_print"},
     Subscription.PREMIUM: {"can_read_web", "can_receive_print", "ad_free"},
 }
 
-_ALL_FLAGS = ["can_read_web", "can_receive_print", "ad_free"]
+ALL_FLAGS = ["can_read_web", "can_receive_print", "ad_free"]
 
 
-def _active_filter(qs):
+def active_subscription_filter(qs):
+    """Return only subscriptions that are active right now.
+
+    Active means: not revoked, start_date is in the past, and either no
+    end_date or end_date is still in the future.
+    """
     today = timezone.now().date()
     return qs.filter(
         revoked_at__isnull=True,
         start_date__lte=today,
     ).filter(Q(end_date__isnull=True) | Q(end_date__gt=today))
-
-
-_EntitlementsResponse = inline_serializer(
-    name="EntitlementsResponse",
-    fields={
-        "user_id": f.IntegerField(),
-        "entitlements": inline_serializer(
-            name="EntitlementFlags",
-            fields={
-                "can_read_web": f.BooleanField(),
-                "can_receive_print": f.BooleanField(),
-                "ad_free": f.BooleanField(),
-            },
-        ),
-        "active_subscriptions": ActiveSubscriptionSerializer(many=True),
-    },
-)
 
 
 @extend_schema_view(
@@ -67,24 +59,22 @@ class UserViewSet(
             "A subscription is active when revoked_at is null, start_date ≤ today, "
             "and end_date is null or end_date > today."
         ),
-        responses={200: _EntitlementsResponse},
+        responses={200: EntitlementsSerializer},
     )
     @action(detail=True, methods=["get"])
     def entitlements(self, request, pk=None):
         user = self.get_object()
-        active_subs = list(_active_filter(user.subscriptions.all()))
+        active_subs = list(active_subscription_filter(user.subscriptions.all()))
 
         granted: set[str] = set()
         for sub in active_subs:
-            granted |= _PRODUCT_GRANTS.get(sub.product, set())
+            granted |= PRODUCT_GRANTS.get(sub.product, set())
 
-        return Response(
-            {
-                "user_id": user.id,
-                "entitlements": {flag: flag in granted for flag in _ALL_FLAGS},
-                "active_subscriptions": ActiveSubscriptionSerializer(active_subs, many=True).data,
-            }
-        )
+        return Response({
+            "user_id": user.id,
+            "entitlements": {flag: flag in granted for flag in ALL_FLAGS},
+            "active_subscriptions": ActiveSubscriptionSerializer(active_subs, many=True).data,
+        })
 
 
 @extend_schema_view(
@@ -118,13 +108,13 @@ class SubscriptionViewSet(
         if product := params.get("product"):
             qs = qs.filter(product__iexact=product)
         if params.get("active") == "true":
-            qs = _active_filter(qs)
+            qs = active_subscription_filter(qs)
 
         return qs
 
     @extend_schema(
         summary="Revoke a subscription",
-        description="Sets revoked_at to the current timestamp. Idempotent state is rejected — revoking an already-revoked subscription returns 400.",
+        description="Sets revoked_at to now. Returns 400 if already revoked.",
         request=None,
         responses={
             200: SubscriptionSerializer,

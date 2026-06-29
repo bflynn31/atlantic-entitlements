@@ -24,16 +24,22 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = ["id", "user", "product", "start_date", "end_date", "revoked_at", "created_at"]
         read_only_fields = ["id", "revoked_at", "created_at"]
 
-    def validate_product(self, value):
-        valid = {Subscription.DIGITAL, Subscription.PRINT, Subscription.PREMIUM}
-        if value.upper() not in valid:
-            raise serializers.ValidationError(f"product must be one of: {', '.join(valid)}")
-        return value.upper()
 
-
+# Compact version used in the entitlements response — omits user/created_at.
 class ActiveSubscriptionSerializer(serializers.ModelSerializer):
-    """Compact serializer used in the entitlements response."""
-
     class Meta:
         model = Subscription
         fields = ["id", "product", "end_date", "revoked_at"]
+
+
+# Serializers for the GET /users/{id}/entitlements/ response shape.
+class EntitlementFlagsSerializer(serializers.Serializer):
+    can_read_web = serializers.BooleanField()
+    can_receive_print = serializers.BooleanField()
+    ad_free = serializers.BooleanField()
+
+
+class EntitlementsSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+    entitlements = EntitlementFlagsSerializer()
+    active_subscriptions = ActiveSubscriptionSerializer(many=True)

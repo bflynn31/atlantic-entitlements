@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api, User, Entitlements, Subscription } from "@/lib/api";
 
-// ─── Entitlements display ─────────────────────────────────────────────────────
+// -- Entitlement badge --
 
 function EntitlementBadge({ label, active }: { label: string; active: boolean }) {
   return (
@@ -22,7 +22,7 @@ function EntitlementBadge({ label, active }: { label: string; active: boolean })
   );
 }
 
-// ─── Subscription status helpers ─────────────────────────────────────────────
+// -- Subscription status helpers --
 
 function subStatus(sub: Subscription): "active" | "expired" | "revoked" | "pending" {
   if (sub.revoked_at) return "revoked";
@@ -45,7 +45,7 @@ const PRODUCT_STYLES: Record<string, string> = {
   PREMIUM: "bg-amber-100 text-amber-700",
 };
 
-// ─── Grant subscription form ──────────────────────────────────────────────────
+// -- Grant subscription form --
 
 function GrantForm({ userId, onGranted }: { userId: number; onGranted: () => void }) {
   const today = new Date().toISOString().slice(0, 10);
@@ -131,7 +131,7 @@ function GrantForm({ userId, onGranted }: { userId: number; onGranted: () => voi
   );
 }
 
-// ─── Subscription row ─────────────────────────────────────────────────────────
+// -- Subscription table row --
 
 function SubscriptionRow({
   sub,
@@ -207,7 +207,7 @@ function SubscriptionRow({
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// -- User detail page --
 
 export default function UserDetailPage() {
   const params = useParams<{ id: string }>();
@@ -219,6 +219,7 @@ export default function UserDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch user, entitlements, and subscriptions in parallel
   const refresh = useCallback(async () => {
     try {
       const [u, e, subs] = await Promise.all([
@@ -268,7 +269,7 @@ export default function UserDetailPage() {
 
   return (
     <div className="space-y-8">
-      {/* Back + header */}
+      {/* Header */}
       <div>
         <Link href="/" className="text-sm text-blue-600 hover:text-blue-800">
           ← Back to Users
@@ -330,7 +331,7 @@ export default function UserDetailPage() {
         </div>
       </section>
 
-      {/* Grant form */}
+      {/* Grant new subscription */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest">
           Grant New Subscription
