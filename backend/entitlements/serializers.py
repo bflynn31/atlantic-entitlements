@@ -24,9 +24,3 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = ["id", "user", "product", "start_date", "end_date", "revoked_at", "created_at"]
         read_only_fields = ["id", "revoked_at", "created_at"]
 
-
-# Compact version used in the entitlements response — omits user/created_at.
-class ActiveSubscriptionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Subscription
-        fields = ["id", "product", "end_date", "revoked_at"]

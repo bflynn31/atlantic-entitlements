@@ -16,13 +16,6 @@ export interface Subscription {
   created_at: string;
 }
 
-export interface ActiveSubscription {
-  id: number;
-  product: "DIGITAL" | "PRINT" | "PREMIUM";
-  end_date: string | null;
-  revoked_at: string | null;
-}
-
 export interface Entitlements {
   user_id: number;
   entitlements: {
@@ -30,7 +23,7 @@ export interface Entitlements {
     can_receive_print: boolean;
     ad_free: boolean;
   };
-  active_subscriptions: ActiveSubscription[];
+  active_subscriptions: Subscription[];
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

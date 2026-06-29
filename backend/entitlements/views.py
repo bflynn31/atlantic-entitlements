@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import Subscription
-from .serializers import ActiveSubscriptionSerializer, SubscriptionSerializer, UserSerializer
+from .serializers import SubscriptionSerializer, UserSerializer
 
 # Each product grants a set of entitlement flags.
 # A user's final entitlements are the union across all their active subscriptions.
@@ -53,7 +53,7 @@ class UserViewSet(
         return Response({
             "user_id": user.id,
             "entitlements": {flag: flag in granted for flag in ALL_FLAGS},
-            "active_subscriptions": ActiveSubscriptionSerializer(active_subs, many=True).data,
+            "active_subscriptions": SubscriptionSerializer(active_subs, many=True).data,
         })
 
 
